@@ -13,8 +13,8 @@ class PFDecom4:
         self.coef = coef
         z = np.roots(list(reversed(coef[1:])))  # note: c4, c3, c2, c1, c0
 
-        print("c: ", list(reversed(coef[1:])))
-        print("z: ", z)
+        # print("c: ", list(reversed(coef[1:])))
+        # print("z: ", z)
 
         z = RootCatalog4(z)
         if z.type_no == 41: self.pfd = self.pfd41(z.ordered_z)
