@@ -1,5 +1,3 @@
-from src.pearsondist import Pearson8
-
 # ajdsim
 
 ## Description
@@ -29,7 +27,7 @@ pdf = pearson.pdf(x)        # density values
 
 ## Documentation
 
-The documentation is hosted on <http://www.yyschools.com/pearsondist/>
+The documentation would probably be hosted on <http://www.yyschools.com/pearsondist/>
 
 ## Ongoing Development
 
