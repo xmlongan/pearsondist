@@ -226,3 +226,16 @@ class Pearson8:
         pow1 = -A1 * np.log(np.abs(x - x1)) - A2 * np.log(np.abs(x - x2))
         pow2 = -A3 * np.log(np.abs(x - x3)) - A4 * np.log(np.abs(x - x4))
         return pow1 + pow2
+
+    def dpdf(self, x):
+        """Derivative of the density function
+
+        :param float x: input value of the density function, it should be within
+          the support of the distribution.
+        :return: derivative of density function.
+        :rtype: np.float or np.array"""
+        a, c0, c1 = self.coef[0], self.coef[1], self.coef[2]
+        c2, c3, c4 = self.coef[3], self.coef[4], self.coef[5]
+        num = a + x
+        den = c0 + c1 * x + c2 * (x ** 2) + c3 * (x ** 3) + c4 * (x ** 4)
+        return - (num / den) * self.pdf(x)
