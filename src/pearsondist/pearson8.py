@@ -239,3 +239,25 @@ class Pearson8:
         num = a + x
         den = c0 + c1 * x + c2 * (x ** 2) + c3 * (x ** 3) + c4 * (x ** 4)
         return - (num / den) * self.pdf(x)
+
+    def ddpdf_roots(self):
+        r"""Get roots of the second derivative of the density function
+
+        The second derivative of the density function is given by
+        :math:`\frac{d p^2(x)}{dx^2} = \frac{P(x)}{Q(x)} p(x)` where
+        :math:`p(x)` denotes the density function,
+        :math:`P(x) = 3c_4 x^4 + (2c_3 + 4c_4a) x^3 + (c_2 + 3c_3a + 1) x^2 + 2a(c_2+1) x + (a^2 + c_1a - c_0)`,
+        :math:`Q(x) = (c_0 + c_1x + c_2x^2 + c_3x^3 + c_4x^4)^2`.
+        Therefore, to find roots of this second derivative is equivalent to
+        finding roots of :math:`P(x)`, i.e., solving :math:`P(x) = 0`.
+
+        :return: roots of the density function
+        :rtype: np.array"""
+        a, c0, c1 = self.coef[0], self.coef[1], self.coef[2]
+        c2, c3, c4 = self.coef[3], self.coef[4], self.coef[5]
+        # The coefficients are ordered from highest power to lowest (x^4 to x^0)
+        coef_ddpdf = [3*c4, 2*c3 + 4*c4*a, c2 + 3*c3*a + 1, 2*a*(c2 + 1), a**2 + c1*a - c0]
+        roots = np.roots(coef_ddpdf)
+        print(f"The roots are: {roots}")
+        real_roots = roots[np.isreal(roots)].real
+        return real_roots
