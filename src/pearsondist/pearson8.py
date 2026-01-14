@@ -23,6 +23,11 @@ class Pearson8:
     Actually, it may be the minimum density instead of the maximum one equal 1.
     """
 
+    lower_bound: float = None
+    """The lower bound of the support of the distribution"""
+    upper_bound: float = None
+    """The upper bound of the support of the distribution"""
+
     def __init__(self, moment: list):
         r"""Initialize Pearson8 object
 
@@ -249,3 +254,9 @@ class Pearson8:
         support8 = Support8(self.coef)
         roots = [support8.argmax_dpdf, support8.argmin_dpdf]
         return roots
+
+    def determine_bounds(self):
+        support8 = Support8(self.coef)
+        support8.determine_bounds()
+        self.lower_bound = support8.lower_bound
+        self.upper_bound = support8.upper_bound
