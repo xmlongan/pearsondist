@@ -4,11 +4,16 @@ import warnings
 class Support8:
 
     lower_bound: float = None
+
     upper_bound: float = None
+
     coef: list = None
+    """coefficients: a, c0, c1, c2, c3, c4"""
 
     argmax_dpdf: float = None
+    """argmax of the derivative of the PDF. to the left of -a"""
     argmin_dpdf: float = None
+    """argmin of the derivative of the PDF. to the right of -a"""
 
     def __init__(self, coef):
         if len(coef) != 6:
@@ -19,26 +24,17 @@ class Support8:
     def arg_max_min_dpdf(self):
         r"""Get argmax and argmin of the derivative of the PDF.
 
-        The second derivative of the density function is given by
-        :math:`\frac{d p^2(x)}{dx^2} = \frac{P(x)}{Q(x)} p(x)` where
-        :math:`p(x)` denotes the density function,
-        :math:`P(x) = 3c_4 x^4 + (2c_3 + 4c_4a) x^3 + (c_2 + 3c_3a + 1) x^2 + 2a(c_2+1) x + (a^2 + c_1a - c_0)`,
-        :math:`Q(x) = (c_0 + c_1x + c_2x^2 + c_3x^3 + c_4x^4)^2`.
-        Therefore, to find roots of this second derivative is equivalent to
-        finding roots of :math:`P(x)`, i.e., solving :math:`P(x) = 0`.
+        From roots of the second derivative of the PDF.
 
         Note that dpdf(-a) = 0
             argmax_dpdf < -a
             argmin_dpdf > -a
         """
-        a, c0, c1 = self.coef[0], self.coef[1], self.coef[2]
-        c2, c3, c4 = self.coef[3], self.coef[4], self.coef[5]
-        # The coefficients are ordered from the highest power to lowest (x^4 to x^0)
-        coef_ddpdf = [3*c4, 2*c3 + 4*c4*a, c2 + 3*c3*a + 1, 2*a*(c2 + 1), a**2 + c1*a - c0]
-        roots = np.roots(coef_ddpdf)
-        print(f"The roots are: {roots}")
+        roots = self.ddpdf_roots()
+        # sort
         real_roots = np.sort(roots[np.isreal(roots)].real)
         #
+        a = self.coef[0]
         # Find the index of the first element larger than `-a` (dpdf = 0)
         idx = np.searchsorted(real_roots, -a, side='right')
         if idx < len(real_roots):
@@ -52,6 +48,47 @@ class Support8:
         else:
             warnings.warn("no ddpdf roots less than -a")
 
+    def determine_bounds(self):
+        a = self.coef[0] # -a argmax_pdf
+        distance1 = -a - self.argmax_dpdf
+        distance2 = self.argmin_dpdf - (-a)
+        x0_left = self.argmax_dpdf - distance1
+        x0_right = self.argmin_dpdf + distance2
+        self.lower_bound = self.newton(x0_left)
+        self.upper_bound = self.newton(x0_right)
+
+    def newton(self, x0, eps=1e-5, iter_max=10):
+        """solve pdf = 0"""
+        iteration = 0
+        msg = f'iteration: {iteration}, x0 = {x0:>12.7f}'
+        while iteration < iter_max:
+            x = x0 - self.pdf_over_dpdf(x0)
+            if abs(x - x0) < eps: break
+            x0 = x
+            iteration += 1
+        msg += f'\titeration: {iteration}, x0 = {x0:>12.7f}'
+        print(msg)
+        return x0
+
+    def pdf_over_dpdf(self, x):
+        a, c0, c1 = self.coef[0], self.coef[1], self.coef[2]
+        c2, c3, c4 = self.coef[3], self.coef[4], self.coef[5]
+        num = c0 + c1*x + c2*x**2 + c3*x**3 + c4*x**4
+        den = a + x
+        return -num/den
+
+    def newton2(self, x0, eps=1e-5, iter_max=10):
+        """solve dpdf = 0"""
+        iteration = 0
+        print(f'iteration: {iteration}, x0 = {x0:.7f}')
+        while iteration < iter_max:
+            x = x0 - self.dpdf_over_ddpdf(x0)
+            if abs(x - x0) < eps: break
+            x0 = x
+            iteration += 1
+        print(f'iteration: {iteration}, x0 = {x0:.7f}')
+        return x0
+
     def dpdf_over_ddpdf(self, x):
         r"""Ratio between the first and second derivative of the PDF.
 
@@ -64,23 +101,29 @@ class Support8:
         """
         a, c0, c1 = self.coef[0], self.coef[1], self.coef[2]
         c2, c3, c4 = self.coef[3], self.coef[4], self.coef[5]
-        num = (a+x) * (c0 + c1*x + c2*x**2 + c3*x**3 + c4*x**4)
-        den = ((3*c4)*x**4
-               + (2*c3 + 4*c4*a)*x**3
-               + (c2 + 3*c3*a + 1)*x**2
-               + 2*a*(c2 + 1)*x
-               + (a**2 + c1*a - c0))
-        return - num/den
+        num = (a + x) * (c0 + c1 * x + c2 * x ** 2 + c3 * x ** 3 + c4 * x ** 4)
+        den = ((3 * c4) * x ** 4
+               + (2 * c3 + 4 * c4 * a) * x ** 3
+               + (c2 + 3 * c3 * a + 1) * x ** 2
+               + 2 * a * (c2 + 1) * x
+               + (a ** 2 + c1 * a - c0))
+        return - num / den
 
-    def newton(self, x0, eps=1e-7, iter_max=10):
-        iteration = 0
-        while iteration < iter_max:
-            x = x0 - self.dpdf_over_ddpdf(x0)
-            if abs(x - x0) < eps: break
-            x0 = x
-            iteration += 1
-        return x0
+    def ddpdf_roots(self):
+        r"""Get roots of the second derivative of the PDF.
 
-    def determine_bounds(self):
-        self.lower_bound = self.newton(self.argmax_dpdf - 1e-5)
-        self.upper_bound = self.newton(self.argmin_dpdf + 1e-5)
+        The second derivative of the density function is given by
+        :math:`\frac{d p^2(x)}{dx^2} = \frac{P(x)}{Q(x)} p(x)` where
+        :math:`p(x)` denotes the density function,
+        :math:`P(x) = 3c_4 x^4 + (2c_3 + 4c_4a) x^3 + (c_2 + 3c_3a + 1) x^2 + 2a(c_2+1) x + (a^2 + c_1a - c_0)`,
+        :math:`Q(x) = (c_0 + c_1x + c_2x^2 + c_3x^3 + c_4x^4)^2`.
+        Therefore, to find roots of this second derivative is equivalent to
+        finding roots of :math:`P(x)`, i.e., solving :math:`P(x) = 0`.
+        """
+        a, c0, c1 = self.coef[0], self.coef[1], self.coef[2]
+        c2, c3, c4 = self.coef[3], self.coef[4], self.coef[5]
+        # The coefficients are ordered from the highest power to lowest (x^4 to x^0)
+        coef_ddpdf = [3*c4, 2*c3 + 4*c4*a, c2 + 3*c3*a + 1, 2*a*(c2 + 1), a**2 + c1*a - c0]
+        roots = np.roots(coef_ddpdf)
+        # print(f"The roots of ddpdf are: {roots}")
+        return roots[np.isreal(roots)].real

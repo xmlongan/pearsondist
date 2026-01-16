@@ -3,6 +3,8 @@ I defined a class :py:class:`Pearson8` to construct Pearson distributions that
 match the first eight moments of the unknown distributions.
 """
 import numpy as np
+
+from pearsondist.adjust_lb_ub import adjust_lb_ub
 from pearsondist.pfdecom4 import PFDecom4
 from pearsondist.support8 import Support8
 
@@ -19,14 +21,16 @@ class Pearson8:
     scale: float = None
     """scale of the Pearson density function
     
-    Scale up|down the density, such that the maximum density (at x = -a) equal 1.
-    Actually, it may be the minimum density instead of the maximum one equal 1.
+    Scale up|down the density, such that the maximum density (at x = -a) equals 1.
+    Actually, it may be the minimum density instead of the maximum one equals 1.
     """
 
     lower_bound: float = None
     """The lower bound of the support of the distribution"""
     upper_bound: float = None
     """The upper bound of the support of the distribution"""
+    bounds: tuple = None
+    """(lower bound, upper bound)"""
 
     def __init__(self, moment: list):
         r"""Initialize Pearson8 object
@@ -246,17 +250,10 @@ class Pearson8:
         den = c0 + c1 * x + c2 * (x ** 2) + c3 * (x ** 3) + c4 * (x ** 4)
         return - (num / den) * self.pdf(x)
 
-    def ddpdf_roots(self):
-        """Get roots of the second derivative of the density function
-
-        the roots limits to the two ones close to -a
-        """
-        support8 = Support8(self.coef)
-        roots = [support8.argmax_dpdf, support8.argmin_dpdf]
-        return roots
-
     def determine_bounds(self):
         support8 = Support8(self.coef)
         support8.determine_bounds()
-        self.lower_bound = support8.lower_bound
-        self.upper_bound = support8.upper_bound
+        lb, ub = adjust_lb_ub(support8.lower_bound, support8.upper_bound, self.pfd)
+        self.lower_bound = lb
+        self.upper_bound = ub
+        self.bounds = (lb, ub)
