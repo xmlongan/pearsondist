@@ -17,12 +17,13 @@ An example:
 ```python
 from pearsondist import Pearson8
 import numpy as np
+
 # provide the first eight moments, no more, no less
 moment = [0.0679246, 0.0200644, 0.0011987, 0.0013033,
-          -0.0002338, 0.0002833,-0.0001786, 0.0001697]
+          -0.0002338, 0.0002833, -0.0001786, 0.0001697]
 pearson = Pearson8(moment)
 x = np.linspace(-1, 1, 100)  # adjust the support accordingly
-pdf = pearson.pdf(x)        # density values
+pdf = pearson.pdf_obj(x)  # density values
 ```
 
 ## Documentation

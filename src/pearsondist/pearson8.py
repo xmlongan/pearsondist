@@ -7,6 +7,7 @@ import numpy as np
 from pearsondist.adjust_lb_ub import adjust_lb_ub
 from pearsondist.pfdecom4 import PFDecom4
 from pearsondist.support8 import Support8
+from pearsondist.pdf import Pdf
 
 
 class Pearson8:
@@ -18,12 +19,9 @@ class Pearson8:
     """coefficients of the Pearson distribution"""
     pfd: dict = None     # partial fraction decomposition
     """Partial Fraction Decomposition of the Pearson distribution"""
-    scale: float = None
-    """scale of the Pearson density function
-    
-    Scale up|down the density, such that the maximum density (at x = -a) equals 1.
-    Actually, it may be the minimum density instead of the maximum one equals 1.
-    """
+
+    pdf_obj: Pdf = None
+    """Un-normalized PDF of the Pearson distribution"""
 
     lower_bound: float = None
     """The lower bound of the support of the distribution"""
@@ -44,16 +42,8 @@ class Pearson8:
         self.mom_to_coef()
         pfdecomp = PFDecom4(self.coef)
         self.pfd = pfdecomp.pfd
-        a = self.coef[0]
-        if self.pfd['type'] == 41: self.scale = self.log_pdf81(-a)
-        if self.pfd['type'] == 42: self.scale = self.log_pdf82(-a)
-        if self.pfd['type'] == 43: self.scale = self.log_pdf83(-a)
-        if self.pfd['type'] == 44: self.scale = self.log_pdf84(-a)
-        if self.pfd['type'] == 45: self.scale = self.log_pdf85(-a)
-        if self.pfd['type'] == 46: self.scale = self.log_pdf86(-a)
-        if self.pfd['type'] == 47: self.scale = self.log_pdf87(-a)
-        if self.pfd['type'] == 48: self.scale = self.log_pdf88(-a)
-        if self.pfd['type'] == 49: self.scale = self.log_pdf89(-a)
+        self.pdf_obj = Pdf(self.pfd, self.coef)
+        # print(f'isMax: {self.pdf_obj.is_max}')
 
     def mom_to_coef(self):
         """From moments to coefficients
@@ -85,175 +75,12 @@ class Pearson8:
         :return: density function value
         :rtype: np.float or np.array
         """
-        if self.pfd['type'] == 41: return np.exp(self.log_pdf81(x) - self.scale)
-        if self.pfd['type'] == 42: return np.exp(self.log_pdf82(x) - self.scale)
-        if self.pfd['type'] == 43: return np.exp(self.log_pdf83(x) - self.scale)
-        if self.pfd['type'] == 44: return np.exp(self.log_pdf84(x) - self.scale)
-        if self.pfd['type'] == 45: return np.exp(self.log_pdf85(x) - self.scale)
-        if self.pfd['type'] == 46: return np.exp(self.log_pdf86(x) - self.scale)
-        if self.pfd['type'] == 47: return np.exp(self.log_pdf87(x) - self.scale)
-        if self.pfd['type'] == 48: return np.exp(self.log_pdf88(x) - self.scale)
-        if self.pfd['type'] == 49: return np.exp(self.log_pdf89(x) - self.scale)
-
-    def log_pdf81(self, x):
-        """log density function when :abbr:`PFD(Partial Fraction Decomposition)` type is 41
-
-        :param float x: input value of the density function, it should be within
-          the support of the distribution.
-        :return: density function value
-        :rtype: np.float or np.array
-        """
-        pfd = self.pfd
-        A, B = pfd['A1'], pfd['B1']
-        t, m, B = x - pfd['x1'].real, pfd['x1'].imag, B + A * pfd['x1'].real
-        pow = A / (2 * (t ** 2 + m ** 2)) - (B / (2 * m ** 2)) * (t / (t ** 2 + m ** 2))
-        pow -= (B / (2 * m ** 3)) * np.atan(t / m)
-        return pow
-
-    def log_pdf82(self, x):
-        """log density function when :abbr:`PFD(Partial Fraction Decomposition)` type is 42
-
-        :param float x: input value of the density function, it should be within
-          the support of the distribution.
-        :return: density function value
-        :rtype: np.float or np.array
-        """
-        pfd = self.pfd
-        x1, A1, B1 = pfd['x1'], pfd['A1'], pfd['B1']
-        x2, A2, B2 = pfd['x2'], pfd['A2'], pfd['B2']
-        t1, m1 = x - x1.real, x1.imag
-        t2, m2 = x - x2.real, x2.imag
-        pow1 = -A1 * np.log(t1 ** 2 + m1 ** 2) / 2 - ((B1 + A1 * x1.real) / m1) * np.atan(t1 / m1)
-        pow2 = -A2 * np.log(t2 ** 2 + m2 ** 2) / 2 - ((B2 + A2 * x2.real) / m2) * np.atan(t2 / m2)
-        return pow1 + pow2
-
-    def log_pdf83(self, x):
-        """log density function when :abbr:`PFD(Partial Fraction Decomposition)` type is 43
-
-        :param float x: input value of the density function, it should be within
-          the support of the distribution.
-        :return: density function value
-        :rtype: np.float or np.array
-        """
-        pfd = self.pfd
-        x1, A1, A2 = pfd['x1'], pfd['A1'], pfd['A2']
-        x3, A3, B3 = pfd['x3'], pfd['A3'], pfd['B3']
-        t3, m3 = x - x3.real, x3.imag
-        pow1 = -A1 * np.log(np.abs(x - x1)) + A2 / (x - x1)
-        pow2 = -A3 * np.log(t3 ** 2 + m3 ** 2) / 2 - ((B3 + A3 * x3.real) / m3) * np.atan(t3 / m3)
-        return pow1 + pow2
-
-    def log_pdf84(self, x):
-        """log density function when :abbr:`PFD(Partial Fraction Decomposition)` type is 44
-
-        :param float x: input value of the density function, it should be within
-          the support of the distribution.
-        :return: density function value
-        :rtype: np.float or np.array
-        """
-        pfd = self.pfd
-        x1, A1 = pfd['x1'], pfd['A1']
-        x2, A2 = pfd['x2'], pfd['A2']
-        x3, A3, B3 = pfd['x3'], pfd['A3'], pfd['B3']
-        t3, m3 = x - x3.real, x3.imag
-        pow1 = -A1 * np.log(np.abs(x - x1)) - A2 * np.log(np.abs(x - x2))
-        pow2 = -A3 * np.log(t3 ** 2 + m3 ** 2) / 2 - ((B3 + A3 * x3.real) / m3) * np.atan(t3 / m3)
-        # return np.exp(pow1 + pow2 + 3430)
-        return pow1 + pow2
-
-    def log_pdf85(self, x):
-        """log density function when :abbr:`PFD(Partial Fraction Decomposition)` type is 45
-
-        :param float x: input value of the density function, it should be within
-          the support of the distribution.
-        :return: density function value
-        :rtype: np.float or np.array
-        """
-        pfd = self.pfd
-        x1, A3, A4 = pfd['x1'], pfd['A3'], pfd['A4']
-        pow = A3 / (2 * (x - x1) ** 2) + A4 / (3 * (x - x1) ** 3)
-        return pow
-
-    def log_pdf86(self, x):
-        """log density function when :abbr:`PFD(Partial Fraction Decomposition)` type is 46
-
-        :param float x: input value of the density function, it should be within
-          the support of the distribution.
-        :return: density function value
-        :rtype: np.float or np.array
-        """
-        pfd = self.pfd
-        x1, A1, A2, A3 = pfd['x1'], pfd['A1'], pfd['A2'], pfd['A3']
-        x4, A4 = pfd['x4'], pfd['A4']
-        pow1 = -A1 * np.log(np.abs(x - x1)) + A2 / (x - x1) + A3 / (2 * (x - x1) ** 2)
-        pow2 = -A4 * np.log(np.abs(x - x4))
-        return pow1 + pow2
-
-    def log_pdf87(self, x):
-        """log density function when :abbr:`PFD(Partial Fraction Decomposition)` type is 47
-
-        :param float x: input value of the density function, it should be within
-          the support of the distribution.
-        :return: density function value
-        :rtype: np.float or np.array
-        """
-        pfd = self.pfd
-        x1, A1, A2 = pfd['x1'], pfd['A1'], pfd['A2']
-        x3, A3, A4 = pfd['x3'], pfd['A3'], pfd['A4']
-        pow1 = -A1 * np.log(np.abs(x - x1)) + A2 / (x - x1)
-        pow2 = -A3 * np.log(np.abs(x - x3)) + A4 / (x - x3)
-        return pow1 + pow2
-
-    def log_pdf88(self, x):
-        """log density function when :abbr:`PFD(Partial Fraction Decomposition)` type is 48
-
-        :param float x: input value of the density function, it should be within
-          the support of the distribution.
-        :return: density function value
-        :rtype: np.float or np.array
-        """
-        pfd = self.pfd
-        x1, A1, A2 = pfd['x1'], pfd['A1'], pfd['A2']
-        x3, A3 = pfd['x3'], pfd['A3']
-        x4, A4 = pfd['x4'], pfd['A4']
-        pow1 = -A1 * np.log(np.abs(x - x1)) + A2 / (x - x1)
-        pow2 = -A3 * np.log(np.abs(x - x3)) - A4 * np.log(np.abs(x - x4))
-        return pow1 + pow2
-
-    def log_pdf89(self, x):
-        """log density function when :abbr:`PFD(Partial Fraction Decomposition)` type is 49
-
-        :param float x: input value of the density function, it should be within
-          the support of the distribution.
-        :return: density function value
-        :rtype: np.float or np.array
-        """
-        pfd = self.pfd
-        x1, A1 = pfd['x1'], pfd['A1']
-        x2, A2 = pfd['x2'], pfd['A2']
-        x3, A3 = pfd['x3'], pfd['A3']
-        x4, A4 = pfd['x4'], pfd['A4']
-        pow1 = -A1 * np.log(np.abs(x - x1)) - A2 * np.log(np.abs(x - x2))
-        pow2 = -A3 * np.log(np.abs(x - x3)) - A4 * np.log(np.abs(x - x4))
-        return pow1 + pow2
+        return self.pdf_obj.pdf(x)
 
     def dpdf(self, x):
-        """Derivative of the density function
-
-        :param float x: input value of the density function, it should be within
-          the support of the distribution.
-        :return: derivative of density function.
-        :rtype: np.float or np.array"""
-        a, c0, c1 = self.coef[0], self.coef[1], self.coef[2]
-        c2, c3, c4 = self.coef[3], self.coef[4], self.coef[5]
-        num = a + x
-        den = c0 + c1 * x + c2 * (x ** 2) + c3 * (x ** 3) + c4 * (x ** 4)
-        return - (num / den) * self.pdf(x)
+        """Derivative of the Pearson density function"""
+        return self.pdf_obj.dpdf(x)
 
     def determine_bounds(self):
-        support8 = Support8(self.coef)
-        support8.determine_bounds()
-        lb, ub = adjust_lb_ub(support8.lower_bound, support8.upper_bound, self.pfd)
-        self.lower_bound = lb
-        self.upper_bound = ub
-        self.bounds = (lb, ub)
+        support8 = Support8(self.pdf_obj)
+        return adjust_lb_ub(support8.lower_bound, support8.upper_bound, self.pfd)

@@ -7,7 +7,7 @@ the type of the roots.
 def adjust_lb_ub(lb, ub, pfd):
     # assume the support lb < 0 < ub
     if lb >= 0.0 or ub <= 0.0:
-        raise ValueError('lb >= 0.0 or ub <= 0.0')
+        raise ValueError(f'lb({lb:.7f}) >= 0.0 or ub({ub:.7f}) <= 0.0')
     lbub = [lb, ub]
     type_pfd = pfd['type']
     if type_pfd == 43 or type_pfd == 45:
