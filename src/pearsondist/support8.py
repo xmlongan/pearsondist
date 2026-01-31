@@ -26,7 +26,7 @@ class Support8:
         if not self.pdf_obj.is_max:
             return self.u_bounds()
         # special case: isMax and type 49
-        elif self.pdf_obj.pfd['type'] == 49:
+        if self.pdf_obj.pfd['type'] == 49:
             return self.distinct4roots_bounds()
         # typical cases: isMax and not type 49
         a = self.coef[0] # -a argmax_pdf
