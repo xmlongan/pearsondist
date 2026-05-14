@@ -29,17 +29,22 @@ class Support8:
         if self.pdf_obj.pfd['type'] == 49:
             return self.distinct4roots_bounds()
         # typical cases: isMax and not type 49
-        a = self.coef[0] # -a argmax_pdf
+        return self.bell_shape_bounds()
+
+    def bell_shape_bounds(self):
+        a = self.coef[0]  # -a argmax_pdf
         argmax_dpdf, argmin_dpdf = self.pdf_obj.arg_max_min_dpdf()
         # determine lower bound
         distance1 = -a - argmax_dpdf
         x0_left = argmax_dpdf - distance1
-        lb = x0_left - 10 * distance1; ub = argmax_dpdf
+        lb = x0_left - 10 * distance1
+        ub = argmax_dpdf
         lower_bound = self.newton(x0_left, lb, ub)
         # determine upper bound
         distance2 = argmin_dpdf - (-a)
         x0_right = argmin_dpdf + distance2
-        lb = argmin_dpdf; ub = x0_right + 10 * distance2
+        lb = argmin_dpdf
+        ub = x0_right + 10 * distance2
         upper_bound = self.newton(x0_right, lb, ub)
         return lower_bound, upper_bound
 
@@ -200,9 +205,17 @@ class Support8:
         if 0 < x1:
             lb = -math.inf
             ub = x1 - 1e-7
+            # return to normal cases as in type 44
+            lbound, ubound = self.bell_shape_bounds()
+            lb = lbound
+            if ubound < ub: ub = ubound
         elif x4 < 0:
             lb = x4 + 1e-7
             ub = math.inf
+            # return to normal cases as in type 44
+            lbound, ubound = self.bell_shape_bounds()
+            ub = ubound
+            if lb < lbound: lb = lbound
         else:
             # x1 < 0 < x4
             if 0 < x2:
