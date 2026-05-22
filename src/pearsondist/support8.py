@@ -138,6 +138,7 @@ class Support8:
         # 46: 4 real: x1 = x2 = x3 != x4
         # 47: 4 real: x1 = x2 != x3 = x4
         pfd = self.pdf_obj.pfd
+        type = pfd['type']
         if type == 44:
             x1 = pfd['x1']
             x2 = pfd['x2']
